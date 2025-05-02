@@ -42,8 +42,8 @@ export default function Login() {
         <div className="row">
           <div className="col-md-6 mx-auto">
             <div className="card mt-5">
-              <div className="card-header">
-                <h3 className="text-center">Login</h3>
+              <div className="card-header bg-black">
+                <h3 className="text-center text-light">Login</h3>
               </div>
               <div className="card-body">
                 {error && <div className="alert alert-danger">{error}</div>}
@@ -77,7 +77,7 @@ export default function Login() {
                   <div className="d-grid">
                     <button
                       type="submit"
-                      className="btn btn-primary"
+                      className="btn btn-dark"
                       disabled={loading}
                     >
                       {loading ? (

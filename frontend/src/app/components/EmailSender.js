@@ -138,7 +138,7 @@ const EmailSender = ({ templateId }) => {
 
   return (
     <div className="card">
-      <div className="card-header">
+      <div className="card-header bg-dark border-0 text-light">
         <h3>Send Email Template: {template.name}</h3>
       </div>
       <div className="card-body">

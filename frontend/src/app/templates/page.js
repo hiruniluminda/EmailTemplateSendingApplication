@@ -19,12 +19,7 @@ export default function Templates() {
 
   return (
     <Layout>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>My Templates</h1>
-        <Link href="/templates/new" className="btn btn-primary">
-          Create New Template
-        </Link>
-      </div>
+      
       <TemplateList />
     </Layout>
   );

@@ -10,7 +10,6 @@ const Navbar = () => {
   const router = useRouter();
 
   useEffect(() => {
-    // Check authentication status when component mounts
     setIsLoggedIn(authService.isAuthenticated());
   }, []);
 
@@ -21,7 +20,7 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav className="navbar navbar-expand-lg navbar-dark bg-black">
       <div className="container">
         <Link href="/" className="navbar-brand">
           Email Templates
