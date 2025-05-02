@@ -60,7 +60,6 @@ public class AuthController {
             UserResponseDto userResponseDto = userService.createUser(userRequestDto);
             UserDetails userDetails = userDetailsService.loadUserByUsername(userResponseDto.getEmail());
 
-            // Get the user ID from the response
             Long userId = userResponseDto.getId();  // Make sure UserResponseDto has getId() method
 
             String token = this.helper.generateTokenWithUserId(userDetails, userId);

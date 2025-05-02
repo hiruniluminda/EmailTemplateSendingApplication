@@ -24,7 +24,6 @@ const EmailSender = ({ templateId }) => {
       setFetchingTemplate(true);
       setError(null);
       
-      // Use the getTemplateWithFallback method to try both services
       const response = await templateService.getTemplateWithFallback(templateId);
       
       if (response && response.data) {
@@ -50,7 +49,6 @@ const EmailSender = ({ templateId }) => {
       return;
     }
 
-    // Split recipient emails by comma and trim whitespace
     const recipientList = recipients.split(',').map(email => email.trim()).filter(email => email);
     
     // Basic email validation
@@ -66,7 +64,6 @@ const EmailSender = ({ templateId }) => {
     setError(null);
     
     try {
-      // Create email data object
       const emailData = {
         recipients: recipientList,
         subject,

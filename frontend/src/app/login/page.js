@@ -14,7 +14,6 @@ export default function Login() {
   const router = useRouter();
 
   useEffect(() => {
-    // If user is already logged in, redirect to templates page
     if (authService.isAuthenticated()) {
       router.push('/templates');
     }

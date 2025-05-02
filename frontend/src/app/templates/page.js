@@ -11,7 +11,7 @@ export default function Templates() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is authenticated
+    // Checking if user is authenticated
     if (!authService.isAuthenticated()) {
       router.push('/login');
     }

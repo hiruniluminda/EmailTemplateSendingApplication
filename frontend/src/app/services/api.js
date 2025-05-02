@@ -1,11 +1,9 @@
 import axios from 'axios';
 
-// API Base URLs
 const AUTH_API_URL = 'http://localhost:8080';
 const TEMPLATE_API_URL = 'http://localhost:8082/api';
 const EMAIL_API_URL = 'http://localhost:8082/api';
 
-// Create axios instances with base URLs
 const authApi = axios.create({
   baseURL: AUTH_API_URL,
 });
@@ -18,7 +16,6 @@ const emailApi = axios.create({
   baseURL: EMAIL_API_URL,
 });
 
-// Add request interceptor to add auth token to all APIs
 const setupInterceptors = (axiosInstance) => {
   axiosInstance.interceptors.request.use(
     (config) => {
@@ -31,12 +28,10 @@ const setupInterceptors = (axiosInstance) => {
     (error) => Promise.reject(error)
   );
   
-  // Add response interceptor for consistent error handling
   axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
       console.error('API Error:', error);
-      // Log the full error details for debugging
       if (error.response) {
         console.error('Response data:', error.response.data);
         console.error('Response status:', error.response.status);
@@ -47,7 +42,6 @@ const setupInterceptors = (axiosInstance) => {
         console.error('Error setting up request:', error.message);
       }
       
-      // Handle token expiration (401 errors)
       if (error.response && error.response.status === 401) {
         console.error('Authentication token expired or invalid');
         localStorage.removeItem('token');
@@ -66,7 +60,6 @@ setupInterceptors(emailApi);
 
 // Template services
 const templateService = {
-  // TempService (port 8082) operations
   getAllTemplates: () => templateApi.get('/templates'),
   getTemplateById: (id) => templateApi.get(`/templates/${id}`),
   createTemplate: (templateData) => templateApi.post('/templates', templateData),
@@ -74,13 +67,10 @@ const templateService = {
   deleteTemplate: (id) => templateApi.delete(`/templates/${id}`),
   searchTemplates: (name) => templateApi.get(`/templates/search?name=${name}`),
   
-  // EmailService (port 8081) operations - fixed endpoint format to match backend
-  // Note: In EmailController.java the endpoint is "/emails/send/{templateId}"
   sendEmail: (templateId, emailData) => {
     console.log(`Sending email using template ID: ${templateId}`, emailData);
     console.log(`Request URL: ${EMAIL_API_URL}/emails/send/${templateId}`);
     
-    // Add explicit debug information to see full request
     return emailApi.post(`/emails/send/${templateId}`, emailData, {
       headers: {
         'Content-Type': 'application/json'
@@ -88,10 +78,8 @@ const templateService = {
     });
   },
   
-  // Template fallback - tries both services
   getTemplateWithFallback: async (id) => {
     try {
-      // First try TempService
       const response = await templateApi.get(`/templates/${id}`);
       console.log('Template found in TempService:', response.data);
       return response;
@@ -99,7 +87,6 @@ const templateService = {
       console.log('Template not found in TempService, trying EmailService...', tempErr);
       
       try {
-        // If TempService fails, try EmailService
         const response = await emailApi.get(`/templates/${id}`);
         console.log('Template found in EmailService:', response.data);
         return response;
@@ -125,7 +112,6 @@ const authService = {
   validateToken: () => authApi.get('/auth/validate-token'),
 };
 
-// Export both individual APIs for direct use and services
 export { 
   templateApi,
   emailApi,

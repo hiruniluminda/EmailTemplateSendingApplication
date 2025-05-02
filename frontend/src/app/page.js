@@ -28,7 +28,6 @@ export default function Home() {
 
   return (
     <Layout>
-      {/* Hero Section */}
       <div className="bg-dark text-white py-5 mb-5">
         <Container className="py-5">
           <Row className="justify-content-center">

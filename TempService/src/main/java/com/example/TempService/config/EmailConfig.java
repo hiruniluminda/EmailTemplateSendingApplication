@@ -23,6 +23,9 @@ public class EmailConfig {
     @Value("${spring.mail.password}")
     private String mailPassword;
 
+    @Value("${spring.mail.sender.name:Your Company Name}")
+    private String senderName;
+
     @Bean
     public JavaMailSender javaMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
@@ -35,8 +38,22 @@ public class EmailConfig {
         props.put("mail.transport.protocol", "smtp");
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.debug", "true");
+        props.put("mail.smtp.ssl.trust", mailHost);
+        props.put("mail.smtp.connectiontimeout", "5000");
+        props.put("mail.smtp.timeout", "5000");
+        props.put("mail.smtp.writetimeout", "5000");
+
+        // These properties help with deliverability
+        props.put("mail.smtp.from", mailUsername);
+        props.put("mail.smtp.localhost", "yourdomain.com"); // Use your actual domain
+        props.put("mail.smtp.sendpartial", "true");
+        props.put("mail.debug", "false"); // Set to false in production
 
         return mailSender;
+    }
+
+    @Bean
+    public String senderName() {
+        return senderName;
     }
 }

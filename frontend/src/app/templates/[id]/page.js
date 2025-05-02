@@ -13,7 +13,7 @@ export default function EditTemplate() {
   const { id } = params;
 
   useEffect(() => {
-    // Check if user is authenticated
+    // Checking if user is authenticated
     if (!authService.isAuthenticated()) {
       router.push('/login');
     }

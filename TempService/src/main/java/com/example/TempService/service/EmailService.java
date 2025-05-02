@@ -2,96 +2,98 @@ package com.example.TempService.service;
 
 import com.example.TempService.dto.EmailRequestDto;
 import com.example.TempService.dto.EmailResponseDto;
-import com.example.TempService.dto.TemplateDtos.TemplateResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.example.TempService.entity.EmailTemplate;
+import com.example.TempService.repo.EmailTemplateRepository;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
+import java.io.UnsupportedEncodingException;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Service
 public class EmailService {
 
-    private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
+    @Autowired
+    private JavaMailSender mailSender;
 
     @Autowired
-    private JavaMailSender javaMailSender;
+    private EmailTemplateRepository templateRepository;
+
+    @Value("${spring.mail.username}")
+    private String senderEmail;
 
     @Autowired
-    private TemplateService templateService;
-
-    @Value("${spring.mail.username:}")
-    private String defaultFromAddress;
+    private String senderName;
 
     public EmailResponseDto sendEmail(Long templateId, EmailRequestDto emailRequestDto) {
-        TemplateResponse template = templateService.getTemplateById(templateId);
-        logger.info("Starting to send emails using template: {}", template.getName());
-
-        int sentCount = 0;
-
         try {
-            // If subject is not provided in the request, use the template subject
-            String subject = emailRequestDto.getSubject();
-            if (subject == null || subject.isEmpty()) {
-                subject = template.getSubject();
+            EmailTemplate template = templateRepository.findById(templateId)
+                    .orElseThrow(() -> new RuntimeException("Template not found with id: " + templateId));
+
+            // Get subject and content (using either from template or request)
+            String subject = emailRequestDto.getSubject() != null && !emailRequestDto.getSubject().isEmpty()
+                    ? emailRequestDto.getSubject() : template.getSubject();
+
+            String content = emailRequestDto.getContent() != null && !emailRequestDto.getContent().isEmpty()
+                    ? emailRequestDto.getContent() : template.getContent();
+
+            List<String> recipients = emailRequestDto.getRecipients();
+
+            if (recipients == null || recipients.isEmpty()) {
+                throw new RuntimeException("No recipients provided");
             }
 
-            // If content is not provided in the request, use the template content
-            String content = emailRequestDto.getContent();
-            if (content == null || content.isEmpty()) {
-                content = template.getContent();
+            // Send email to each recipient individually (better for deliverability)
+            for (String recipient : recipients) {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+                // Set proper FROM header with name
+                helper.setFrom(new InternetAddress(senderEmail, senderName));
+
+                // Set TO (individual recipient)
+                helper.setTo(recipient);
+
+                // Set subject with template name prefix to make it recognizable
+                helper.setSubject(subject);
+
+                // Add message ID and List-Unsubscribe headers
+                String messageId = "<" + UUID.randomUUID().toString() + "@yourdomain.com>";
+                message.setHeader("Message-ID", messageId);
+                message.setHeader("List-Unsubscribe", "<mailto:" + senderEmail + "?subject=unsubscribe>");
+                message.setHeader("X-Mailer", "Your Application Name");
+
+                // Add footer with unsubscribe link to HTML content
+                String unsubscribeFooter = "<br><br><hr style='border:none;height:1px;background-color:#e0e0e0'>" +
+                        "<p style='font-size:12px;color:#666'>You received this email because you are registered with " +
+                        senderName + ". If you don't want to receive these emails, " +
+                        "<a href='mailto:" + senderEmail + "?subject=Unsubscribe'>click here to unsubscribe</a>.</p>";
+
+                // Add the content with unsubscribe footer
+                helper.setText(content + unsubscribeFooter, true);
+
+                // Send the message
+                mailSender.send(message);
             }
 
-            // Determine the sender address
-            String fromAddress = emailRequestDto.getFrom();
-            if (fromAddress == null || fromAddress.isEmpty()) {
-                fromAddress = defaultFromAddress;
-            }
+            EmailResponseDto response = new EmailResponseDto();
+            response.setSuccess(true);
+            response.setMessage("Email sent successfully to " + recipients.size() + " recipients");
+            return response;
 
-            for (String recipient : emailRequestDto.getRecipients()) {
-                logger.info("Sending email to recipient: {}", recipient);
-
-                SimpleMailMessage message = new SimpleMailMessage();
-                message.setTo(recipient);
-                message.setSubject(subject);
-                message.setText(content);
-
-                // Set FROM address explicitly
-                message.setFrom(fromAddress);
-
-                try {
-                    javaMailSender.send(message);
-                    logger.info("Successfully sent email to: {}", recipient);
-                    sentCount++;
-                } catch (Exception e) {
-                    logger.error("Failed to send email to: {}, Error: {}", recipient, e.getMessage());
-                }
-            }
-
-            if (sentCount > 0) {
-                logger.info("Email sending process completed. Sent {} emails successfully", sentCount);
-                return new EmailResponseDto(
-                        "Emails sent successfully",
-                        true,
-                        sentCount
-                );
-            } else {
-                logger.warn("No emails were sent successfully");
-                return new EmailResponseDto(
-                        "Failed to send any emails",
-                        false,
-                        sentCount
-                );
-            }
         } catch (Exception e) {
-            logger.error("Error in email sending process: {}", e.getMessage());
-            return new EmailResponseDto(
-                    "Failed to send emails: " + e.getMessage(),
-                    false,
-                    sentCount
-            );
+            EmailResponseDto response = new EmailResponseDto();
+            response.setSuccess(false);
+            response.setMessage("Error sending email: " + e.getMessage());
+            return response;
         }
     }
 }
